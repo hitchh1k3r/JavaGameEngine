@@ -4,11 +4,14 @@ import com.hitchh1k3rsguide.game.components.ComponentDivable;
 import com.hitchh1k3rsguide.game.components.ComponentFlappable;
 import com.hitchh1k3rsguide.game.components.ComponentSlideable;
 import com.hitchh1k3rsguide.game.entities.EntityFlappyBird;
+import com.hitchh1k3rsguide.game.entities.EntityRagDoll;
 import com.hitchh1k3rsguide.game.entities.EntityWater;
 import com.hitchh1k3rsguide.game.systems.SystemDebug;
 import com.hitchh1k3rsguide.game.systems.SystemFlapping;
 import com.hitchh1k3rsguide.game.systems.SystemSliding;
 import com.hitchh1k3rsguide.gameEngine.GameEngine;
+import com.hitchh1k3rsguide.gameEngine.components.ComponentArrowKeys;
+import com.hitchh1k3rsguide.gameEngine.components.ComponentCollision;
 import com.hitchh1k3rsguide.gameEngine.components.ComponentGravity;
 import com.hitchh1k3rsguide.gameEngine.components.ComponentMessageable;
 import com.hitchh1k3rsguide.gameEngine.components.ComponentMovable;
@@ -18,8 +21,6 @@ import com.hitchh1k3rsguide.gameEngine.components.ComponentUpkeep;
 import com.hitchh1k3rsguide.gameEngine.components.ComponentWindow;
 import com.hitchh1k3rsguide.gameEngine.entities.EntityGameWindow;
 import com.hitchh1k3rsguide.gameEngine.entities.EntityMusic;
-import com.hitchh1k3rsguide.gameEngine.messages.MessageCleanup;
-import com.hitchh1k3rsguide.gameEngine.messages.MessageInitialize;
 import com.hitchh1k3rsguide.gameEngine.systems.SystemRendering;
 import com.hitchh1k3rsguide.gameEngine.systems.SystemSimplePlatformPhysics;
 import com.hitchh1k3rsguide.gameEngine.systems.SystemSound;
@@ -49,6 +50,8 @@ public class Game
         ecs.addComponent(ComponentUpkeep.class);
         ecs.addComponent(ComponentMessageable.class);
         ecs.addComponent(ComponentPlaysSound.class);
+        ecs.addComponent(ComponentCollision.class);
+        ecs.addComponent(ComponentArrowKeys.class);
 
         // Add Systems:
         ecs.systems.add(new SystemDebug());
@@ -67,17 +70,12 @@ public class Game
         ecs.addEntity(new EntityFlappyBird(ecs.getUniqueID(), 1));
         ecs.addEntity(new EntityFlappyBird(ecs.getUniqueID(), 2));
         ecs.addEntity(new EntityFlappyBird(ecs.getUniqueID(), 3));
+        ecs.addEntity(new EntityRagDoll(ecs.getUniqueID()));
         ecs.addEntity(new EntityWater(ecs.getUniqueID()));
-        ecs.addEntity(new EntityMusic(ecs.getUniqueID(), "Song.ogg"));
-
-        // Allow Systems and Entities to do late Initialization:
-        ecs.sendMessage(new MessageInitialize());
+        ecs.addEntity(new EntityMusic(ecs.getUniqueID(), "Song.ogg", 99829.84f));
 
         // Run ECS!
         ecs.run();
-
-        // Allow Systems and Entities to do Cleanup:
-        ecs.sendMessage(new MessageCleanup());
 
         System.exit(0);
     }

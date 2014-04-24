@@ -1,12 +1,14 @@
 package com.hitchh1k3rsguide.game.entities;
 
 import java.awt.Graphics2D;
+import java.util.ArrayList;
 
 import com.hitchh1k3rsguide.game.Game;
 import com.hitchh1k3rsguide.game.components.ComponentDivable;
 import com.hitchh1k3rsguide.game.components.ComponentFlappable;
 import com.hitchh1k3rsguide.game.components.ComponentSlideable;
 import com.hitchh1k3rsguide.gameEngine.GameEngine;
+import com.hitchh1k3rsguide.gameEngine.components.ComponentCollision;
 import com.hitchh1k3rsguide.gameEngine.components.ComponentGravity;
 import com.hitchh1k3rsguide.gameEngine.components.ComponentMessageable;
 import com.hitchh1k3rsguide.gameEngine.components.ComponentMovable;
@@ -14,25 +16,35 @@ import com.hitchh1k3rsguide.gameEngine.components.ComponentRenderable;
 import com.hitchh1k3rsguide.gameEngine.components.ComponentUpkeep;
 import com.hitchh1k3rsguide.gameEngine.entities.AbstractEntity;
 import com.hitchh1k3rsguide.gameEngine.messages.IMessage;
-import com.hitchh1k3rsguide.gameEngine.messages.MessageRequest;
 import com.hitchh1k3rsguide.gameEngine.messages.MessageResponse;
-import com.hitchh1k3rsguide.gameEngine.systems.SystemSimplePlatformPhysics;
 import com.hitchh1k3rsguide.gameEngine.utilities.graphics.Sprite;
 import com.hitchh1k3rsguide.gameEngine.utilities.graphics.Sprite.Property;
+import com.hitchh1k3rsguide.gameEngine.utilities.physics.AbstractBoundingVolume;
+import com.hitchh1k3rsguide.gameEngine.utilities.physics.CircularBounding;
 import com.hitchh1k3rsguide.gameEngine.utilities.physics.Vec2d;
 
 public class EntityFlappyBird extends AbstractEntity implements ComponentRenderable,
         ComponentFlappable, ComponentGravity, ComponentSlideable, ComponentDivable,
-        ComponentMovable, ComponentUpkeep, ComponentMessageable
+        ComponentMovable, ComponentUpkeep, ComponentMessageable, ComponentCollision
 {
+
+    private enum Action
+    {
+        NONE, FLAP, DIVE
+    }
 
     private static Sprite birdGFX;
     int flapTime = -1;
     Vec2d position;
     Vec2d velocity;
     boolean inWater = false;
+    boolean inWaterLast = false;
     boolean askForGravity = false;
     int request;
+    int actionIndex;
+    Action lastAction;
+    ArrayList<Action> actionQue;
+    CircularBounding bounds;
 
     public EntityFlappyBird(long index, int value)
     {
@@ -41,9 +53,17 @@ public class EntityFlappyBird extends AbstractEntity implements ComponentRendera
         {
             birdGFX = new Sprite("Flappy.png");
         }
-        this.position = new Vec2d(100 + (value * 50), 100 + (value * 50));
-        this.velocity = new Vec2d(0, 0);
+        this.position = new Vec2d(100 + (value * 50), 25 + (value * 100));
+        this.velocity = new Vec2d(0, 10);
         request = -1;
+        lastAction = Action.NONE;
+        actionQue = new ArrayList<Action>();
+        for (int i = 0; i <= 10 * 3; ++i)
+        {
+            actionQue.add(Action.NONE);
+        }
+        actionIndex = value * 10;
+        bounds = new CircularBounding(position, 25);
     }
 
     @Override
@@ -62,7 +82,7 @@ public class EntityFlappyBird extends AbstractEntity implements ComponentRendera
     @Override
     public void flap()
     {
-        flapTime = 1;
+        lastAction = Action.FLAP;
     }
 
     @Override
@@ -104,8 +124,7 @@ public class EntityFlappyBird extends AbstractEntity implements ComponentRendera
     @Override
     public void dive()
     {
-        flapTime = -1;
-        velocity.y += 10;
+        lastAction = Action.DIVE;
     }
 
     @Override
@@ -159,22 +178,21 @@ public class EntityFlappyBird extends AbstractEntity implements ComponentRendera
     @Override
     public void update(GameEngine ecs)
     {
-        if (inWater && position.y < Game.GAME_HEIGHT - 175)
+        actionQue.add(lastAction);
+        switch (actionQue.get(actionIndex))
         {
-            inWater = false;
+            case DIVE:
+                flapTime = -1;
+                velocity.y = 15;
+                break;
+            case FLAP:
+                flapTime = 1;
+                break;
+            default:
+                break;
         }
-        else if (!inWater && position.y > Game.GAME_HEIGHT - 175)
-        {
-            if (!askForGravity)
-            {
-                askForGravity = true;
-                MessageRequest requestMessage = new MessageRequest(
-                        SystemSimplePlatformPhysics.REQUEST_getGravity);
-                request = requestMessage.index;
-                ecs.sendMessage(requestMessage);
-            }
-            inWater = true;
-        }
+        actionQue.remove(0);
+        lastAction = Action.NONE;
     }
 
     @Override
@@ -187,6 +205,34 @@ public class EntityFlappyBird extends AbstractEntity implements ComponentRendera
                 System.out
                         .println("GOT GRAVITY BY REQUEST: " + ((MessageResponse) message).payload);
             }
+        }
+    }
+
+    @Override
+    public void primaryUpdate(GameEngine ecs)
+    {
+        update(ecs);
+        inWater = inWaterLast;
+        inWaterLast = false;
+    }
+
+    @Override
+    public AbstractBoundingVolume getBounds()
+    {
+        return bounds;
+    }
+
+    @Override
+    public void collidesWith(ComponentCollision other)
+    {
+        if (other instanceof EntityWater)
+        {
+            if (!inWater)
+            {
+                ((EntityWater) other).playSplash = true;
+            }
+            inWater = true;
+            inWaterLast = true;
         }
     }
 

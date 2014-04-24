@@ -18,6 +18,16 @@ public class SystemDebug implements ISystem
     @Override
     public void update(GameEngine ecs)
     {
+    }
+
+    @Override
+    public void getMessage(GameEngine ecs, IMessage message)
+    {
+    }
+
+    @Override
+    public void primaryUpdate(GameEngine ecs)
+    {
         Collection<AbstractEntity> windows = ecs.getAll(ComponentWindow.class).values();
         for (AbstractEntity window : windows)
         {
@@ -49,11 +59,6 @@ public class SystemDebug implements ISystem
                 e.printStackTrace();
             }
         }
-    }
-
-    @Override
-    public void getMessage(GameEngine ecs, IMessage message)
-    {
     }
 
 }

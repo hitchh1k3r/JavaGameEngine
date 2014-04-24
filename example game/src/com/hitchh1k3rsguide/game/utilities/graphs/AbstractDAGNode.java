@@ -12,6 +12,20 @@ public abstract class AbstractDAGNode
     {
         this.parent = parent;
         this.children = children;
+        if (children == null)
+        {
+            this.children = new ArrayList<AbstractDAGNode>();
+        }
+    }
+
+    public void setChildren(ArrayList<AbstractDAGNode> children)
+    {
+        this.children = children;
+    }
+
+    public ArrayList<AbstractDAGNode> getChildren()
+    {
+        return children;
     }
 
 }

@@ -16,6 +16,16 @@ public class SystemSliding implements ISystem
     @Override
     public void update(GameEngine ecs)
     {
+    }
+
+    @Override
+    public void getMessage(GameEngine ecs, IMessage message)
+    {
+    }
+
+    @Override
+    public void primaryUpdate(GameEngine ecs)
+    {
         Collection<AbstractEntity> windows = ecs.getAll(ComponentWindow.class).values();
         Collection<AbstractEntity> slideableEntities = ecs.getAll(ComponentSlideable.class)
                 .values();
@@ -33,11 +43,6 @@ public class SystemSliding implements ISystem
                 }
             }
         }
-    }
-
-    @Override
-    public void getMessage(GameEngine ecs, IMessage message)
-    {
     }
 
 }
